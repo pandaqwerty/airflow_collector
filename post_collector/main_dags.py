@@ -30,7 +30,7 @@ with DAG(dag_id=DAG_ID, default_args=default_args, schedule_interval=interval, s
     process_keywords_dag = SubDagOperator(
         task_id=main_subdags_id,
         subdag=all_process(
-            "{0}.{1}".format(DAG_ID, main_subdags_id), start_date, interval, default_args, PROJECT_NAME, PROJECT_VERSION),
+            "{0}.{1}".format(DAG_ID, main_subdags_id), start_date, interval, default_args),
         depends_on_past=True,
         dag=dag
     )

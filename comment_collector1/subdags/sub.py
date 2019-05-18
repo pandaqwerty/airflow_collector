@@ -34,11 +34,11 @@ def all_process(dag_id, start_date, schedule_interval, default_args, project_nam
         # q1 = 'SELECT * FROM nubr_reviewer limit 10'
         # start_date = ''
         # end_date = ''
-        q1 = "select * from nubr_userappos left join nubr_skintones on nubr_userappos.skintone_id = nubr_skintones.skiton_id left join nubr_skintypes on nubr_userappos.skintype_id = nubr_skintypes.skityp_id left join nubr_skinundertones on nubr_userappos.skintone_id = nubr_skinundertones.skiund_id left join nubr_hairtypes on nubr_userappos.user_haityp_id = nubr_hairtypes.haityp_id left join nubr_bodyconcerns on nubr_userappos.user_bodcon_id = nubr_bodyconcerns.bodcon_id left join nubr_hairtextures on nubr_userappos.user_haitex_id = nubr_hairtextures.haitex_id left join nubr_hairconcerns on nubr_userappos.user_haicon_id = nubr_hairconcerns.haicon_id limit 10 between lasvisit '2013-01-01 05:00:00' and '2013-12-31 17:00:00';"
+        q1 = "select * from nubr_comment  where cmn_post_date between '2016-02-10 17:00:000' and '2016-02-11 16:59:59';"
         #'{lt}' and '{gt}'".format(lt='2013-09-13 00:00:00', gt='2013-12-10 23:59:59')
 
-        get_nubr_userappos = PythonOperator(
-            task_id='get_nubr_userappos',
+        get_nubr_comment = PythonOperator(
+            task_id='get_nubr_comment',
             python_callable=query_to_rds,
             op_kwargs={
                 'host': host,
@@ -62,7 +62,7 @@ def all_process(dag_id, start_date, schedule_interval, default_args, project_nam
             python_callable=upload_file,
             templates_dict={
                 'parse_dt': "{{ (ts | parsets) }}",
-                'query_values': "{{ ti.xcom_pull(task_ids='get_nubr_userappos') }}",
+                'query_values': "{{ ti.xcom_pull(task_ids='get_nubr_comment') }}",
                 'connection_name': connection_name,
                 'bucket_name': bucket_name
             },
@@ -76,7 +76,7 @@ def all_process(dag_id, start_date, schedule_interval, default_args, project_nam
             task_id='end'
         )
 
-        get_nubr_userappos >> upload_to_s3 >> end
+        get_nubr_comment >> upload_to_s3 >> end
 
         return dag
 
@@ -87,9 +87,9 @@ def upload_file(**context):
     # print(context['templates_dict']['query_values'])
     hook = S3_hook.S3Hook(context['templates_dict']['connection_name'])
     hook.load_string(string_data=context['templates_dict']['query_values'],
-                     key="{base}/{dt}/{file}".format(base="userappos",
+                     key="{base}/{dt}/{file}".format(base="comment",
                                                      dt=context['templates_dict']['parse_dt'],
-                                                     file='data_190326.json'),
+                                                     file='data_.csv'),
                      bucket_name=context['templates_dict']['bucket_name'], replace=True)
                      
 def query_to_rds(host, user, port, password, dbname, query, **kwargs):
